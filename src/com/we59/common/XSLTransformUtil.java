@@ -31,8 +31,12 @@ import javax.xml.xpath.XPathConstants;
 
 public class XSLTransformUtil extends CommonProperties {
 
-	private static final ArrayList<Map<String, String>> l = new ArrayList<Map<String, String>>();
+	//creating employeeArrayList
+	
+	private static final ArrayList<Map<String, String>> employeeArrayList = new ArrayList<Map<String, String>>();
 
+	//creating maoDataSet variable
+	
 	private static Map<String, String> map = null;
 
 	
@@ -46,11 +50,14 @@ public class XSLTransformUtil extends CommonProperties {
 	 */
 	
 	
-	public static void rEQUESTtRANSFORM() throws Exception {
-
-		Source request = new StreamSource(new File("src/com/csse/config/EmployeeRequest.xml"));
-		Source modify = new StreamSource(new File("src/com/csse/config/Employee-modified.xsl"));
-		Result result = new StreamResult(new File("src/com/csse/config/EmployeeResponse.xml"));
+	public static void requestTransform() throws Exception {
+		//Creating Instance of Source and Accessing the employeeRequest xml
+		Source request = new StreamSource(new File(properties.getProperty("EmployeeRequestPath")));
+		//Creating Instance of Source and Accessing the Employee-modified xml
+		Source modify = new StreamSource(new File(properties.getProperty("Employee_modified_Path")));
+		//Creating Instance of Result and Accessing the EmployeeResponse xml
+		Result result = new StreamResult(new File(properties.getProperty("EmployeeResponsePath")));
+		
 		TransformerFactory.newInstance().newTransformer(modify).transform(request, result);
 	}
 
@@ -64,29 +71,34 @@ public class XSLTransformUtil extends CommonProperties {
 	 * @throws Exception
 	 */
 	
+	
+	
 	public static ArrayList<Map<String, String>> XMLXPATHS() throws Exception {
-
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-				.parse("src/com/csse/config/EmployeeResponse.xml");
+		
+		//creating new Document type variable to access the EmployeeResponse XML
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(properties.getProperty("EmployeeResponsePath"));
+		
+		// creating new XPath Instance
 		XPath request = XPathFactory.newInstance().newXPath();
-		int n = Integer.parseInt((String) request.compile("count(//Employees/Employee)").evaluate(doc, XPathConstants.STRING));
+		
+		//get the count of the xml data set to num variable
+		int n = Integer.parseInt((String) request.compile(properties.getProperty("Count_Employee_Path")).evaluate(doc, XPathConstants.STRING));
 		for (int i = 1; i <= n; i++) {
+			
+			//assinging new HashMap to the mapDataSet variable
 			map = new HashMap<String, String>();
-			map.put("XpathEmployeeIDKey", (String) request.compile("//Employees/Employee[" + i + "]/EmployeeID/text()")
-					.evaluate(doc, XPathConstants.STRING));
-			map.put("XpathEmployeeNameKey", (String) request.compile("//Employees/Employee[" + i + "]/EmployeeFullName/text()")
-					.evaluate(doc, XPathConstants.STRING));
-			map.put("XpathEmployeeAddressKey",
-					(String) request.compile("//Employees/Employee[" + i + "]/EmployeeFullAddress/text()").evaluate(doc,
-							XPathConstants.STRING));
-			map.put("XpathFacultyNameKey", (String) request.compile("//Employees/Employee[" + i + "]/FacultyName/text()")
-					.evaluate(doc, XPathConstants.STRING));
-			map.put("XpathDepartmentKey", (String) request.compile("//Employees/Employee[" + i + "]/Department/text()")
-					.evaluate(doc, XPathConstants.STRING));
-			map.put("XpathDesignationKey", (String) request.compile("//Employees/Employee[" + i + "]/Designation/text()")
-					.evaluate(doc, XPathConstants.STRING));
-			l.add(map);
+			
+			//insert very single employee's data set by set in to the mapDataSet
+			map.put(properties.getProperty("XpathEmployeeIDKey"), (String) request.compile("//Employees/Employee[" + i + "]/EmployeeID/text()").evaluate(doc, XPathConstants.STRING));
+			map.put(properties.getProperty("XpathEmployeeNameKey"), (String) request.compile("//Employees/Employee[" + i + "]/EmployeeFullName/text()").evaluate(doc, XPathConstants.STRING));
+			map.put(properties.getProperty("XpathEmployeeAddressKey"),(String) request.compile("//Employees/Employee[" + i + "]/EmployeeFullAddress/text()").evaluate(doc,XPathConstants.STRING));
+			map.put(properties.getProperty("XpathFacultyNameKey"), (String) request.compile("//Employees/Employee[" + i + "]/FacultyName/text()").evaluate(doc, XPathConstants.STRING));
+			map.put(properties.getProperty("XpathDepartmentKey"), (String) request.compile("//Employees/Employee[" + i + "]/Department/text()").evaluate(doc, XPathConstants.STRING));
+			map.put(properties.getProperty("XpathDesignationKey"), (String) request.compile("//Employees/Employee[" + i + "]/Designation/text()").evaluate(doc, XPathConstants.STRING));
+			
+			//insert mapDataSet value to the main employee Array List
+			employeeArrayList.add(map);
 		}
-		return l;
+		return employeeArrayList;
 	}
 }

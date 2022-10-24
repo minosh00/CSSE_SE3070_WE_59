@@ -32,9 +32,7 @@ public class CommonUtil extends CommonProperties {
 		NodeList nodelist; 
 		Element element = null;
 		
-		nodelist = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-				.parse(new File("src/com/csse/config/EmployeeQuery.xml"))
-				.getElementsByTagName("query");
+		nodelist = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(properties.getProperty("EmployeeQuery_path")).getElementsByTagName("query");
 		for (int x = 0; x < nodelist.getLength(); x++) {
 			element = (Element) nodelist.item(x);
 			if (element.getAttribute("id").equals(id))

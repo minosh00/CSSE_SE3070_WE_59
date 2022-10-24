@@ -5,6 +5,7 @@ import com.we59.common.CommonUtil;
 import com.we59.common.XSLTransformUtil;
 import com.we59.model.Employee;
 
+import java.io.IOException;
 import java.sql.Connection;
 //import java.util.logging.Logger;
 import java.sql.DriverManager;
@@ -23,6 +24,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+
+import org.xml.sax.SAXException;
+
 /**
  * The class Employee service extends common properties
  */
@@ -30,12 +36,13 @@ import java.util.logging.Logger;
 
 public class EmployeeService extends CommonProperties {
 
-	private final ArrayList<Employee> el = new ArrayList<Employee>();
+	private final ArrayList<Employee> employeelist = new ArrayList<Employee>();
 
 	private static Connection connection;
 
 	private static Statement statement;
-
+	private static EmployeeService uniqueInstance;
+	
 	private PreparedStatement preparedStatement;
 
 	public static final Logger log = Logger.getLogger(EmployeeService.class.getName());
@@ -52,16 +59,50 @@ public class EmployeeService extends CommonProperties {
 			Class.forName("com.mysql.jdbc.Driver");
 			connection = DriverManager.getConnection(properties.getProperty("url"), properties.getProperty("username"),
 					properties.getProperty("password"));
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Connection not found");
+			log.log(Level.INFO, "Database Connection Success");
+			
+		} catch (NumberFormatException e) {
 			log.log(Level.SEVERE, e.getMessage());
-
 		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error..");
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (NullPointerException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (Exception e) {
 			log.log(Level.SEVERE, e.getMessage());
 		}
 	}
+	
+	// Get Singleton Object
 
+		public static EmployeeService getInstance() {
+			if (uniqueInstance == null) {
+				synchronized (EmployeeService.class) {
+					if (uniqueInstance == null) {
+						uniqueInstance = new EmployeeService();
+					}
+				}
+			}
+			return uniqueInstance;
+		}
+
+		/**
+		 * 
+		 * Execute Employee Service methods according to template pattern
+		 *
+		 */
+		public final void executeEmployeeServiceMethods() {
+			setEmployeesToArrayList();
+			createEmployeeTable();
+			createEmployee();
+			getAllEmployees();
+		}
+
+		/**
+		 *
+		 * Sets the employees to array list
+		 *
+		 */
+		
 	/**
 	 *
 	 * Sets the employees to array list
@@ -73,20 +114,44 @@ public class EmployeeService extends CommonProperties {
 		try {
 			int statement = XSLTransformUtil.XMLXPATHS().size();
 			for (int i = 0; i < statement; i++) {
-				Map<String, String> l = XSLTransformUtil.XMLXPATHS().get(i);
+				Map<String, String> employeeOutPutMap  = XSLTransformUtil.XMLXPATHS().get(i);
 				Employee employee = new Employee();
-				employee.setEmployeeID(l.get("XpathEmployeeIDKey"));
-				employee.setFullName(l.get("XpathEmployeeNameKey"));
-				employee.setAddress(l.get("XpathEmployeeAddressKey"));
-				employee.setFacultyName(l.get("XpathFacultyNameKey"));
-				employee.setDepartment(l.get("XpathDepartmentKey"));
-				employee.setDesignation(l.get("XpathDesignationKey"));
-				el.add(employee);
+				employee.setEmployeeID(employeeOutPutMap .get("XpathEmployeeIDKey"));
+				employee.setFullName(employeeOutPutMap .get("XpathEmployeeNameKey"));
+				employee.setAddress(employeeOutPutMap .get("XpathEmployeeAddressKey"));
+				employee.setFacultyName(employeeOutPutMap .get("XpathFacultyNameKey"));
+				employee.setDepartment(employeeOutPutMap .get("XpathDepartmentKey"));
+				employee.setDesignation(employeeOutPutMap .get("XpathDesignationKey"));
+				employeelist.add(employee);
 				System.out.println(employee.toString() + "\n");
 			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "SQL Error..");
+		} catch (NumberFormatException e) {
 			log.log(Level.SEVERE, e.getMessage());
+		} catch (XPathExpressionException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SAXException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (ParserConfigurationException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (NullPointerException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, e.getMessage());
+			}
 		}
 	}
 
@@ -94,14 +159,63 @@ public class EmployeeService extends CommonProperties {
 	 *
 	 * Create employee table
 	 *
-	 */
+	 *** @throws NumberFormatException
+     *     - Thrown to indicate that the application has attempted to
+     * *          convert a string to one of the numeric types
+     *
+     *@throws ClassNotFoundException
+     *    - Thrown when an application tries to load in a class through
+     *     its string name using
+     *     
+     * @throws SAXException 
+     *     - Encapsulate a general SAX error or warning
+     * 
+     * @throws I0Exception
+     *    - Exception produced by failed or interrupted I/O operations.
+     *    
+     * @throws ParserConfigurationException
+     *    - Indicates a serious configuration error.
+     *    
+     * @throws NullPointerException
+     *    - Service is not available
+     *
+     * @throws SQLException
+     *     - Thrown when database access error occurs or this method is called on a closed connection
+     */
 	
 	public void createEmployeeTable() {
 		try {
 			statement = connection.createStatement();
 			statement.executeUpdate(CommonUtil.getEmployeeQueries("q2"));
 			statement.executeUpdate(CommonUtil.getEmployeeQueries("q1"));
+		
+		} catch (NumberFormatException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (XPathExpressionException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SAXException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (ParserConfigurationException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (NullPointerException e) {
+			log.log(Level.SEVERE, e.getMessage());
 		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, e.getMessage());
+			}
 		}
 	}
 
@@ -116,8 +230,8 @@ public class EmployeeService extends CommonProperties {
 		try {
 			preparedStatement = connection.prepareStatement(CommonUtil.getEmployeeQueries("q3"));
 			connection.setAutoCommit(false);
-			for (int i = 0; i < el.size(); i++) {
-				Employee employee = el.get(i);
+			for (int i = 0; i < employeelist.size(); i++) {
+				Employee employee = employeelist.get(i);
 				preparedStatement.setString(1, employee.getEmployeeID());
 				preparedStatement.setString(2, employee.getFullName());
 				preparedStatement.setString(3, employee.getAddress());
@@ -128,13 +242,35 @@ public class EmployeeService extends CommonProperties {
 			}
 			preparedStatement.executeBatch();
 			connection.commit();
+		} catch (NumberFormatException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (XPathExpressionException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SAXException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (ParserConfigurationException e) {
+			log.log(Level.SEVERE, e.getMessage());
 		} catch (SQLException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (NullPointerException e) {
 			log.log(Level.SEVERE, e.getMessage());
 		} catch (Exception e) {
 			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, e.getMessage());
+			}
 		}
 	}
-
 	/**
 	 *
 	 * Gets the employee by identifier
@@ -142,7 +278,29 @@ public class EmployeeService extends CommonProperties {
 	 * @param eid
 	 *            the employee ID
 	 * 
-	 */
+	 ** @throws NumberFormatException
+     *     - Thrown to indicate that the application has attempted to
+     * *          convert a string to one of the numeric types
+     *
+     *@throws ClassNotFoundException
+     *    - Thrown when an application tries to load in a class through
+     *     its string name using
+     *     
+     * @throws SAXException 
+     *     - Encapsulate a general SAX error or warning
+     * 
+     * @throws I0Exception
+     *    - Exception produced by failed or interrupted I/O operations.
+     *    
+     * @throws ParserConfigurationException
+     *    - Indicates a serious configuration error.
+     *    
+     * @throws NullPointerException
+     *    - Service is not available
+     *
+     * @throws SQLException
+     *     - Thrown when database access error occurs or this method is called on a closed connection
+     */
 	
 	public void getEmployeeById(String eid) {
 
@@ -162,10 +320,33 @@ public class EmployeeService extends CommonProperties {
 			ArrayList<Employee> l = new ArrayList<Employee>();
 			l.add(emp);
 			printEmployeeDetails(l);
-		} catch (SQLException ex) {
-			log.log(Level.SEVERE, ex.getMessage());
-		} catch (Exception ex) {
-			log.log(Level.SEVERE, ex.getMessage());
+		} catch (NumberFormatException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (XPathExpressionException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SAXException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (ParserConfigurationException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (NullPointerException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, e.getMessage());
+			}
 		}
 	}
 
@@ -176,7 +357,29 @@ public class EmployeeService extends CommonProperties {
 	 *
 	 * @param eid
 	 *            the employee ID
-	 */
+	 *** @throws NumberFormatException
+     *     - Thrown to indicate that the application has attempted to
+     * *          convert a string to one of the numeric types
+     *
+     *@throws ClassNotFoundException
+     *    - Thrown when an application tries to load in a class through
+     *     its string name using
+     *     
+     * @throws SAXException 
+     *     - Encapsulate a general SAX error or warning
+     * 
+     * @throws I0Exception
+     *    - Exception produced by failed or interrupted I/O operations.
+     *    
+     * @throws ParserConfigurationException
+     *    - Indicates a serious configuration error.
+     *    
+     * @throws NullPointerException
+     *    - Service is not available
+     *
+     * @throws SQLException
+     *     - Thrown when database access error occurs or this method is called on a closed connection
+     */
 	
 	public void deleteEmployeeById(String eid) {
 
@@ -184,8 +387,33 @@ public class EmployeeService extends CommonProperties {
 			preparedStatement = connection.prepareStatement(CommonUtil.getEmployeeQueries("q6"));
 			preparedStatement.setString(1, eid);
 			preparedStatement.executeUpdate();
+		} catch (NumberFormatException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (XPathExpressionException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SAXException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (ParserConfigurationException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (NullPointerException e) {
+			log.log(Level.SEVERE, e.getMessage());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, e.getMessage());
+			}
 		}
 	}
 
@@ -193,7 +421,29 @@ public class EmployeeService extends CommonProperties {
 	 *
 	 * Gets the all employees
 	 *
-	 */
+	 *** @throws NumberFormatException
+     *     - Thrown to indicate that the application has attempted to
+     * *          convert a string to one of the numeric types
+     *
+     *@throws ClassNotFoundException
+     *    - Thrown when an application tries to load in a class through
+     *     its string name using
+     *     
+     * @throws SAXException 
+     *     - Encapsulate a general SAX error or warning
+     * 
+     * @throws I0Exception
+     *    - Exception produced by failed or interrupted I/O operations.
+     *    
+     * @throws ParserConfigurationException
+     *    - Indicates a serious configuration error.
+     *    
+     * @throws NullPointerException
+     *    - Service is not available
+     *
+     * @throws SQLException
+     *     - Thrown when database access error occurs or this method is called on a closed connection
+     */
 	
 	public void getAllEmployees() {
 
@@ -214,15 +464,36 @@ public class EmployeeService extends CommonProperties {
 				l.add(emp);
 			}
 
-			printEmployeeDetails(l);
+		} catch (NumberFormatException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (XPathExpressionException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (SAXException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} catch (ParserConfigurationException e) {
+			log.log(Level.SEVERE, e.getMessage());
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, e.getMessage());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+		} catch (NullPointerException e) {
 			log.log(Level.SEVERE, e.getMessage());
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, e.getMessage());
+			}
 		}
+		printEmployeeDetails(l);
 	}
-
 	/**
 	 *
 	 * Print employee details
@@ -230,7 +501,6 @@ public class EmployeeService extends CommonProperties {
 	 * @param employeeList
 	 *            the employee list
 	 */
-	
 	
 	public void printEmployeeDetails(ArrayList<Employee> l) {
 
